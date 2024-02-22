@@ -22,11 +22,13 @@ export default function SeedPurse() {
     }, [address])
 
     useEffect(()=> {
-        fetch(`/api/seeds?wallet=${useAddress}`).then((res) => res.json()).then((data) => setSeeds(data.seeds))
+        if(useAddress){
+            fetch(`/api/seeds?wallet=${useAddress}`).then((res) => res.json()).then((data) => setSeeds(data?.seeds || []))
+        }
     }, [useAddress])
 
     useEffect(()=>{
-        if(seeds.length>0){
+        if(seeds && seeds.length>0){
             setCurrentSeed(0)
         }
     }, [JSON.stringify(seeds)])
