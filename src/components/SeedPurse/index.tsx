@@ -6,17 +6,24 @@ import { useSearchParams } from 'next/navigation'
  
 export default function SeedPurse() {
     const searchParams = useSearchParams()
-    const { address } = searchParams.has('wallet') ? {address: searchParams.get('wallet')} : searchParams.has('id') ? {address: "0x" + BigInt(searchParams.get('id') || "0").toString(16).padStart(40, "0")} : useAccount() 
+    const { address } = useAccount() 
+    
     console.log(address)
     // const address = '0x'
     // todo: type/schema for seed db return
     const [seeds, setSeeds] = useState<any[]>([])
     const [currentSeed, setCurrentSeed] = useState<number>(-1)
     const [seedData, setSeedData] = useState<any>({})
+    const [useAddress, setUseAddress] = useState<string>("")
     useEffect(() => {
         console.log(address)
-        fetch(`/api/seeds?wallet=${address}`).then((res) => res.json()).then((data) => setSeeds(data.seeds))
+        setUseAddress((searchParams.has('wallet') ? searchParams.get('wallet') : searchParams.has('id') ? "0x" + BigInt(searchParams.get('id') || "0").toString(16).padStart(40, "0"): address) || "")
+        
     }, [address])
+
+    useEffect(()=> {
+        fetch(`/api/seeds?wallet=${useAddress}`).then((res) => res.json()).then((data) => setSeeds(data.seeds))
+    }, [useAddress])
 
     useEffect(()=>{
         if(seeds.length>0){
@@ -65,7 +72,6 @@ export default function SeedPurse() {
       <option value={idx} key={`seed_option_${idx}_${seed.i}`}>{seed.i}</option>
     ))}
     </select>
-    {!address && <w3m-button />}
   </div>
     )
 }
