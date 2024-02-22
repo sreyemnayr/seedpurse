@@ -17,7 +17,18 @@ export default function SeedPurse() {
     const [useAddress, setUseAddress] = useState<string>("")
     useEffect(() => {
         console.log(address)
-        setUseAddress((searchParams.has('wallet') ? searchParams.get('wallet') : searchParams.has('id') ? "0x" + BigInt(searchParams.get('id') || "0").toString(16).padStart(40, "0"): address) || "")
+        let tmpAddress = address || ""
+        if (searchParams.has('wallet')) {
+            tmpAddress = searchParams.get('wallet') || ""
+        }
+        if (searchParams.has('id')) {
+            tmpAddress = searchParams.get('id') || ""
+            if (tmpAddress.length == 64) {
+                tmpAddress = "0x" + tmpAddress
+            }
+            tmpAddress = "0x" + BigInt(tmpAddress).toString(16).padStart(40, "0")
+        }
+        setUseAddress(tmpAddress)
         
     }, [address])
 
