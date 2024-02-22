@@ -1,5 +1,3 @@
-"use client"
-import Image from 'next/image'
 import SeedPurse from '@/components/SeedPurse'
 
 export default function Home() {
