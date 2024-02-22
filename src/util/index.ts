@@ -1,5 +1,5 @@
 
-import fg_genes from '@/data/fg_genes';
+import fg_genes from '@/data/fg_genes.json';
 import * as THREE from 'three';
 
 function seed_id_to_parents(token_id: number) {
