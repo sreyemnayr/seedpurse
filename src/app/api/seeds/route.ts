@@ -10,7 +10,7 @@ export async function GET(request: Request) {
         const wallet = params.get("wallet");
         if (wallet){
             const seeds = await getSeeds(wallet?.toLowerCase())
-            console.log(seeds)
+            // console.log(seeds)
             return new Response(JSON.stringify({seeds}));
       
         } else {

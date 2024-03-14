@@ -1,14 +1,16 @@
-export async function GET(request: Request) {
-    const url = new URL(request.url);
-    const params = url.searchParams;
-    
+export async function GET(request: Request, {params}: {params: {id: string}}) {
+    // const url = new URL(request.url);
+    // const params = url.searchParams;
+    const id = params.id
 
     try {
-        const id = params.get("id");
+        // const id = params.get("id");
         if (id){
             let tmpAddress = ""
             if (id.length == 64) {
                 tmpAddress = "0x" + id
+            } else {
+                tmpAddress = id
             }
             tmpAddress = "0x" + BigInt(tmpAddress).toString(16).padStart(40, "0")
 

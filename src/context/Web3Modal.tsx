@@ -12,7 +12,7 @@ import { State, WagmiProvider } from 'wagmi'
 // 0. Setup queryClient
 const queryClient = new QueryClient()
 // 3. Create modal
-createWeb3Modal({ wagmiConfig: config, projectId })
+createWeb3Modal({ wagmiConfig: config, projectId, themeMode: 'dark' })
 
 export function Web3Modal({
   children,

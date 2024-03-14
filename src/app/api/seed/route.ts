@@ -10,7 +10,7 @@ export async function GET(request: Request) {
         const id = params.get("id");
         if (id){
             const seed = await getSeed(id)
-            console.log(seed)
+            // console.log(seed)
             return new Response(JSON.stringify({seed}));
       
         } else {
