@@ -26,6 +26,7 @@ export async function GET(
 
   try {
     const imageBuffer = await generateSeedImage(Number(id));
+    console.log('Image buffer received, size:', imageBuffer.length);
     
     let outputBuffer: Buffer;
     if (format === 'jpeg') {
@@ -35,6 +36,7 @@ export async function GET(
     } else {
       outputBuffer = imageBuffer;
     }
+    console.log('Output buffer prepared, size:', outputBuffer.length);
 
     return new NextResponse(outputBuffer, {
       status: 200,
@@ -45,6 +47,10 @@ export async function GET(
     });
   } catch (error) {
     console.error('Error generating seed image:', error);
-    return NextResponse.json({ error: 'Failed to generate seed image' }, { status: 500 });
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+    return NextResponse.json({ error: 'Failed to generate seed image', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
