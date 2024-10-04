@@ -25,15 +25,15 @@ export async function GET(
   }
 
   try {
-    const pngBuffer = await generateSeedImage(Number(id));
+    const imageBuffer = await generateSeedImage(Number(id));
     
     let outputBuffer: Buffer;
     if (format === 'jpeg') {
-      outputBuffer = await sharp(pngBuffer)
+      outputBuffer = await sharp(imageBuffer)
         .jpeg({ quality: 90 })
         .toBuffer();
     } else {
-      outputBuffer = pngBuffer;
+      outputBuffer = imageBuffer;
     }
 
     return new NextResponse(outputBuffer, {

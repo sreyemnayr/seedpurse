@@ -1,4 +1,4 @@
-import { Canvas, CanvasRenderingContext2D, Image, createCanvas, loadImage } from 'canvas';
+import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs/promises';
 
@@ -75,8 +75,15 @@ async function images_from_seed_id(seed_id: number) {
   return images;
 }
 
-async function drawImagesOnCanvas(canvas: any, images: SeedImageData[], jpgSpriteSheet: any, pngSpriteSheet: any) {
-  const ctx = canvas.getContext('2d');
+async function generateSeedImageWithSharp(images: SeedImageData[], jpgSpriteSheet: Buffer, pngSpriteSheet: Buffer): Promise<Buffer> {
+  const canvas = sharp({
+    create: {
+      width: 500,
+      height: 500,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 }
+    }
+  });
 
   for (let image of images) {
     let spriteInfo = sprite_data[image.url];
@@ -86,35 +93,33 @@ async function drawImagesOnCanvas(canvas: any, images: SeedImageData[], jpgSprit
       let sWidth = right - left;
       let sHeight = lower - upper;
 
-      ctx.save();
-      ctx.globalCompositeOperation = image.blendMode;
+      const spriteSheet = image.url.split('.')[1] === 'jpg' ? jpgSpriteSheet : pngSpriteSheet;
+      
+      const extractedImage = await sharp(spriteSheet)
+        .extract({ left: sx, top: sy, width: sWidth, height: sHeight })
+        .toBuffer();
 
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate((image.rotation * Math.PI) / 180);
-
-      ctx.translate(-canvas.width / 2, -canvas.height / 2);
-      let whichSheet = image.url.split('.')[1] == 'jpg' ? jpgSpriteSheet : pngSpriteSheet;
-      ctx.drawImage(whichSheet, sx, sy, sWidth, sHeight, left, upper, sWidth, sHeight);
-
-      ctx.restore();
+      canvas.composite([{
+        input: extractedImage,
+        top: upper,
+        left: left,
+        blend: image.blendMode === 'multiply' ? 'multiply' : 'over'
+      }]);
     }
   }
+
+  return canvas.png().toBuffer();
 }
 
 export async function generateSeedImage(seedId: number): Promise<Buffer> {
-  const canvas: Canvas = createCanvas(500, 500);
-  const ctx: CanvasRenderingContext2D = canvas.getContext('2d');
-  
   if (seedId > 655370000) {
-    const seed_img: Image = await loadImage(`https://nftstorage.link/ipfs/bafybeie7xdbktqjltxy3pgxwhurak6txhl3bd5yvjl7dbkdwwiojiapxn4/${seedId}.jpg`);
-    ctx.drawImage(seed_img, 0, 0, canvas.width, canvas.height);
+    const response = await fetch(`https://nftstorage.link/ipfs/bafybeie7xdbktqjltxy3pgxwhurak6txhl3bd5yvjl7dbkdwwiojiapxn4/${seedId}.jpg`);
+    return Buffer.from(await response.arrayBuffer());
   } else {
-    const jpgSpriteSheet: Image = await loadImage(path.join(process.cwd(), 'public', 'seed_parts', 'sprite_sheet.jpg'));
-    const pngSpriteSheet: Image = await loadImage(path.join(process.cwd(), 'public', 'seed_parts', 'sprite_sheet.png'));
+    const jpgSpriteSheet = await fs.readFile(path.join(process.cwd(), 'public', 'seed_parts', 'sprite_sheet.jpg'));
+    const pngSpriteSheet = await fs.readFile(path.join(process.cwd(), 'public', 'seed_parts', 'sprite_sheet.png'));
     
     const images = await images_from_seed_id(seedId);
-    await drawImagesOnCanvas(canvas, images, jpgSpriteSheet, pngSpriteSheet);
+    return generateSeedImageWithSharp(images, jpgSpriteSheet, pngSpriteSheet);
   }
-
-  return canvas.toBuffer('image/png');
 }
