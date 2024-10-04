@@ -12,25 +12,29 @@
     "@tweenjs/tween.js": "^23.1.1",
     "@types/three": "^0.159.0",
     "@web3modal/wagmi": "^4.1.0",
+    "canvas": "^2.11.2",
     "hotkeys-js": "^3.13.7",
+    "mongodb": "^6.3.0",
     "next": "14.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "sharp": "^0.33.5",
     "three": "^0.159.0",
     "three.interactive": "^1.7.0",
     "viem": "^2.7.12",
-    "wagmi": "^2.5.7",
-    "mongodb": "^6.3.0"
+    "wagmi": "^2.5.7"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "@types/sharp": "^0.32.0",
     "autoprefixer": "^10.0.1",
     "eslint": "^8",
     "eslint-config-next": "14.1.0",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3"
-  }
+  },
+  "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447"
 }
