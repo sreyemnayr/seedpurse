@@ -79,8 +79,15 @@ async function images_from_seed_id(seed_id: number) {
   return images;
 }
 
-async function generateSeedImageWithSharp(images: SeedImageData[], jpgSpriteSheet: Buffer, pngSpriteSheet: Buffer): Promise<Buffer> {
-  const canvasSize = 500;
+async function generateSeedImageWithSharp(
+  images: SeedImageData[], 
+  jpgSpriteSheet: Buffer, 
+  pngSpriteSheet: Buffer, 
+  size: number = 500
+): Promise<Buffer> {
+  const canvasSize = size;
+  const scaleFactor = size === 100 ? 5 : 1;
+  
   const baseCanvas = sharp({
     create: {
       width: canvasSize,
@@ -96,8 +103,8 @@ async function generateSeedImageWithSharp(images: SeedImageData[], jpgSpriteShee
     let spriteInfo = sprite_data[image.url];
     
     if (spriteInfo && spriteInfo.xy && spriteInfo.bb) {
-      let [sx, sy] = spriteInfo.xy;
-      let [left, upper, right, lower] = spriteInfo.bb;
+      let [sx, sy] = spriteInfo.xy.map(coord => Math.ceil(coord / scaleFactor));
+      let [left, upper, right, lower] = spriteInfo.bb.map(coord => Math.ceil(coord / scaleFactor));
       let sWidth = right - left;
       let sHeight = lower - upper;
 
@@ -164,20 +171,25 @@ async function generateSeedImageWithSharp(images: SeedImageData[], jpgSpriteShee
   }
 }
 
-export async function generateSeedImage(seedId: number): Promise<Buffer> {
+export async function generateSeedImage(seedId: number, size: number = 500): Promise<Buffer> {
   if (seedId > 655370000) {
     const response = await fetch(`https://nftstorage.link/ipfs/bafybeie7xdbktqjltxy3pgxwhurak6txhl3bd5yvjl7dbkdwwiojiapxn4/${seedId}.jpg`);
     if (!response.ok) {
       throw new Error(`Failed to fetch image for seed ID ${seedId}`);
     }
-    return Buffer.from(await response.arrayBuffer());
+    const buffer = Buffer.from(await response.arrayBuffer());
+    if (size === 100) {
+      return sharp(buffer).resize(100, 100).toBuffer();
+    }
+    return buffer;
   } else {
     try {
-      const jpgSpriteSheet = await fs.readFile(path.join(process.cwd(), 'public', 'seed_parts', 'sprite_sheet.jpg'));
-      const pngSpriteSheet = await fs.readFile(path.join(process.cwd(), 'public', 'seed_parts', 'sprite_sheet.png'));
+      const suffix = size === 100 ? '_100' : '';
+      const jpgSpriteSheet = await fs.readFile(path.join(process.cwd(), 'public', 'seed_parts', `sprite_sheet${suffix}.jpg`));
+      const pngSpriteSheet = await fs.readFile(path.join(process.cwd(), 'public', 'seed_parts', `sprite_sheet${suffix}.png`));
 
       const images = await images_from_seed_id(seedId);
-      const result = await generateSeedImageWithSharp(images, jpgSpriteSheet, pngSpriteSheet);
+      const result = await generateSeedImageWithSharp(images, jpgSpriteSheet, pngSpriteSheet, size);
       return result;
     } catch (error) {
       console.error(`Error generating seed image for ID ${seedId}:`, error);

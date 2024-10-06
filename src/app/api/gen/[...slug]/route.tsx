@@ -10,6 +10,15 @@ export async function GET(
     return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
   }
 
+  let size = 500;
+  if (params.slug.length === 2) {
+    size = parseInt(params.slug[0]);
+    // if size is not 100 or 500 then return error
+    if (size !== 100 && size !== 500) {
+      return NextResponse.json({ error: 'Invalid size. Use 100 or 500.' }, { status: 400 });
+    }
+  }
+
   const idParts = params.slug.slice(0, -1);
   const [fileNamePart, ext] = params.slug[params.slug.length - 1].split('.');
   // const id = [...idParts, fileNamePart].join('.');
@@ -25,7 +34,7 @@ export async function GET(
   }
 
   try {
-    const imageBuffer = await generateSeedImage(Number(id));
+    const imageBuffer = await generateSeedImage(Number(id), size);
     console.log('Image buffer received, size:', imageBuffer.length);
     
     let outputBuffer: Buffer;
