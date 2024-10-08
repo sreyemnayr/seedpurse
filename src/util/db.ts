@@ -7,7 +7,7 @@ export const getSeeds = cache(async (wallet: string) => {
     const db = client.db('seeds')
     const collection = db.collection('SeedPurses')
 
-    const items = await collection.find({ owner: wallet.toLowerCase(), progress: {$gte: 100} }).sort({ _updatedAt: -1 }).project({ tokenId: 1, minted: 1, protected: 1 }).toArray()
+    const items = await collection.find({ owner: wallet.toLowerCase(), progress: {$gte: 100} }).sort({ _updated_at: -1 }).project({ tokenId: 1, minted: 1, protected: 1 }).toArray()
     return items.map((item: Document) => {
         return {
             _id: item._id,
