@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/gen/**/*.tsx": {
+    "src/app/api/gen/**/*.tsx": {
       "memory": 3009,
       "maxDuration": 30
     }
