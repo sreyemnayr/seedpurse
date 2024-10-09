@@ -112,14 +112,13 @@ async function generateSeedImageWithSharp(
       let extractedImage;
 
       if (canvasSize === 2000) {
-        const imagePath = path.join(process.cwd(), 'public', 'cropped_seed_parts', image.url);
-        try {
-          const imageBuffer = await fs.readFile(imagePath);
-          extractedImage = sharp(imageBuffer);
-        } catch (error) {
-          console.error(`Error loading image ${image.url}:`, error);
-          continue;
+        const baseUrl = 'https://jedle42hckslzzfa.public.blob.vercel-storage.com/cropped_seed_parts/';
+        const response = await fetch(`${baseUrl}${image.url}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch image for seed ID ${image.url}`);
         }
+        const imageBuffer = Buffer.from(await response.arrayBuffer());
+        extractedImage = sharp(imageBuffer);
       } else {
         const spriteSheet = image.url.split('.')[1] === 'jpg' ? jpgSpriteSheet : pngSpriteSheet;
         extractedImage = sharp(spriteSheet, { failOnError: false })
