@@ -13,9 +13,9 @@ export async function GET(
   let size = 500;
   if (params.slug.length === 2) {
     size = parseInt(params.slug[0]);
-    // if size is not 100 or 500 then return error
-    if (size !== 100 && size !== 500) {
-      return NextResponse.json({ error: 'Invalid size. Use 100 or 500.' }, { status: 400 });
+    // if size > 2000 then return error
+    if (size > 2000 || size < 1) {
+      return NextResponse.json({ error: 'Invalid size. Use a size less than 2000 and greater than 0.' }, { status: 400 });
     }
   }
 

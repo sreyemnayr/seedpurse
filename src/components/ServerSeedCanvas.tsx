@@ -85,8 +85,9 @@ async function generateSeedImageWithSharp(
   pngSpriteSheet: Buffer, 
   size: number = 500
 ): Promise<Buffer> {
-  const canvasSize = size;
-  const scaleFactor = size === 100 ? 5 : 1;
+  const canvasSize = size > 500 ? 2000 : size <= 100 ? 100 : 500;
+  const scaleFactor = size > 500 ? 0.25 : size <= 100 ? 5 : 1;
+  // const scaleFactor = size === 100 ? 5 : (size === 2000 ? 0.25 : 1);
   
   const baseCanvas = sharp({
     create: {
@@ -103,17 +104,29 @@ async function generateSeedImageWithSharp(
     let spriteInfo = sprite_data[image.url];
     
     if (spriteInfo && spriteInfo.xy && spriteInfo.bb) {
-      let [sx, sy] = spriteInfo.xy.map(coord => Math.ceil(coord / scaleFactor));
-      let [left, upper, right, lower] = spriteInfo.bb.map(coord => Math.ceil(coord / scaleFactor));
+      let [sx, sy] = spriteInfo.xy.map(coord => Math.round(coord / scaleFactor));
+      let [left, upper, right, lower] = spriteInfo.bb.map(coord => Math.round(coord / scaleFactor));
       let sWidth = right - left;
       let sHeight = lower - upper;
 
-      const spriteSheet = image.url.split('.')[1] === 'jpg' ? jpgSpriteSheet : pngSpriteSheet;
-      
-      try {
-        let extractedImage = sharp(spriteSheet, { failOnError: false })
-          .extract({ left: sx, top: sy, width: sWidth, height: sHeight });
+      let extractedImage;
 
+      if (canvasSize === 2000) {
+        const imagePath = path.join(process.cwd(), 'public', 'cropped_seed_parts', image.url);
+        try {
+          const imageBuffer = await fs.readFile(imagePath);
+          extractedImage = sharp(imageBuffer);
+        } catch (error) {
+          console.error(`Error loading image ${image.url}:`, error);
+          continue;
+        }
+      } else {
+        const spriteSheet = image.url.split('.')[1] === 'jpg' ? jpgSpriteSheet : pngSpriteSheet;
+        extractedImage = sharp(spriteSheet, { failOnError: false })
+          .extract({ left: sx, top: sy, width: sWidth, height: sHeight });
+      }
+
+      try {
         if (image.rotation !== 0) {
           const rotationCanvas = sharp({
             create: {
@@ -136,8 +149,8 @@ async function generateSeedImageWithSharp(
           const meta = await sharp(await placedImage.png().toBuffer()).metadata();
           
           const extractedRotatedImage = sharp(await placedImage.png().toBuffer()).extract({ 
-            left: Math.ceil(((meta.width ?? canvasSize) - canvasSize) / 2), 
-            top: Math.ceil(((meta.height ?? canvasSize) - canvasSize) / 2), 
+            left: Math.round(((meta.width ?? canvasSize) - canvasSize) / 2), 
+            top: Math.round(((meta.height ?? canvasSize) - canvasSize) / 2), 
             width: canvasSize, 
             height: canvasSize 
           });
@@ -178,19 +191,26 @@ export async function generateSeedImage(seedId: number, size: number = 500): Pro
       throw new Error(`Failed to fetch image for seed ID ${seedId}`);
     }
     const buffer = Buffer.from(await response.arrayBuffer());
-    if (size === 100) {
-      return sharp(buffer).resize(100, 100).toBuffer();
+    if (size !== 2000) {
+      return sharp(buffer).resize(size, size).toBuffer();
     }
     return buffer;
   } else {
     try {
-      const suffix = size === 100 ? '_100' : '';
-      const jpgSpriteSheet = await fs.readFile(path.join(process.cwd(), 'public', 'seed_parts', `sprite_sheet${suffix}.jpg`));
-      const pngSpriteSheet = await fs.readFile(path.join(process.cwd(), 'public', 'seed_parts', `sprite_sheet${suffix}.png`));
-
       const images = await images_from_seed_id(seedId);
-      const result = await generateSeedImageWithSharp(images, jpgSpriteSheet, pngSpriteSheet, size);
-      return result;
+      const suffix = size <= 100 ? '_100' : '';
+      const jpgSpriteSheet = size > 500 ? Buffer.alloc(0) : await fs.readFile(path.join(process.cwd(), 'public', 'seed_parts', `sprite_sheet${suffix}.jpg`));
+      const pngSpriteSheet = size > 500 ? Buffer.alloc(0) : await fs.readFile(path.join(process.cwd(), 'public', 'seed_parts', `sprite_sheet${suffix}.png`));
+
+      const buffer = await generateSeedImageWithSharp(images, jpgSpriteSheet, pngSpriteSheet, size);
+
+      if ([2000, 500, 100].includes(size)) {
+        return buffer;
+      } else {
+        return sharp(buffer).resize(size, size).toBuffer();
+      }
+      
+      
     } catch (error) {
       console.error(`Error generating seed image for ID ${seedId}:`, error);
       throw error;
